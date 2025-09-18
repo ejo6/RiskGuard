@@ -1,5 +1,6 @@
-# Ensure random values work for infernece
-python3 /home/eric/RiskGuard/Inference/inferencing/test_inference.py
+#!/usr/bin/env bash
+# Ensure random values work for inference
+python3 inferencing/test/test_inference.py
 
-# Ensure 
-python3 /home/eric/RiskGuard/Inference/inferencing/test_pre-engineered_features.py -n 100
+# Ensure pre-engineered features path works
+python3 inferencing/test/test_pre-engineered_features.py -n 100

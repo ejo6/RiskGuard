@@ -9,33 +9,18 @@ from tritonclient.http import InferenceServerClient, InferInput, InferRequestedO
 
 from feature_engineering import FeatureEngineer, load_top_columns_from_csv
 
-
+# Resolve repository root relative to this file
 def _repo_root() -> Path:
     here = Path(__file__).resolve()
-    # In the new layout this file lives at <repo>/inferencing/engineer_and_infer.py
+    # this file lives at <repo>/inferencing/engineer_and_infer.py
     if here.parent.name == 'inferencing':
         return here.parent.parent  # repo root
-    # In the old layout it might live at <repo>/Inference/inferencing/engineer_and_infer.py
-    if here.parent.name == 'inferencing' and here.parent.parent.name == 'Inference':
-        return here.parent.parent.parent
     # Fallback: two levels up
     return here.parents[2]
 
 
 def _engineered_top_csv_map() -> dict:
-    root = _repo_root()
-    candidates = [
-        root / 'datasets',              # new structure
-        root / 'Inference' / 'datasets' # old structure
-    ]
-    for base in candidates:
-        if (base / 'engineered_training_top25.csv').exists():
-            return {
-                'lgbm_top25': str(base / 'engineered_training_top25.csv'),
-                'lgbm_top50': str(base / 'engineered_training_top50.csv'),
-                'lgbm_top100': str(base / 'engineered_training_top100.csv'),
-            }
-    # default to new structure paths (may be overridden by --top-csv)
+    # Use new structure under <repo>/datasets (may be overridden by --top-csv)
     base = _repo_root() / 'datasets'
     return {
         'lgbm_top25': str(base / 'engineered_training_top25.csv'),
@@ -64,18 +49,14 @@ def infer(cli: InferenceServerClient, model: str, x: np.ndarray):
 
 def main():
     parser = argparse.ArgumentParser(description="Engineer features from raw transactions and run inference on Triton.")
-    # Default input attempts new then old structure
-    default_input_new = _repo_root() / 'datasets' / 'merged_transactions.csv'
-    default_input_old = _repo_root() / 'Inference' / 'datasets' / 'merged_transactions.csv'
-    default_input = str(default_input_new if default_input_new.exists() else default_input_old)
-    parser.add_argument("--input", default=default_input, help="Raw transactions CSV path.")
+    # Default input uses new structure
+    default_input = _repo_root() / 'datasets' / 'merged_transactions.csv'
+    parser.add_argument("--input", default=str(default_input), help="Raw transactions CSV path.")
     parser.add_argument("-n", "--rows", type=int, default=int(os.environ.get("ROWS", 10)), help="Rows to process.")
     parser.add_argument("--model", choices=["lgbm_top25", "lgbm_top50", "lgbm_top100", "all"], default="all", help="Model to use.")
     parser.add_argument("--top-csv", default=None, help="Optional override CSV to read top-column order from (inferred by model otherwise).")
-    default_art_new = _repo_root() / 'inferencing' / 'artifacts' / 'engineering_artifacts.json'
-    default_art_old = _repo_root() / 'Inference' / 'inferencing' / 'artifacts' / 'engineering_artifacts.json'
-    default_art = str(default_art_new if default_art_new.exists() else default_art_old)
-    parser.add_argument("--artifacts", default=default_art, help="Path to saved engineering artifacts JSON.")
+    default_art = _repo_root() / 'inferencing' / 'artifacts' / 'engineering_artifacts.json'
+    parser.add_argument("--artifacts", default=str(default_art), help="Path to saved engineering artifacts JSON.")
     parser.add_argument("--triton-url", default=os.environ.get("TRITON_URL", "localhost:8000"), help="Triton HTTP endpoint host:port")
     args = parser.parse_args()
 

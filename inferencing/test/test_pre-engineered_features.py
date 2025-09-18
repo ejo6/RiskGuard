@@ -21,7 +21,8 @@ FEATURE_COUNTS = {
     "lgbm_top100": 100,
 }
 
-SAMPLE_TXN_CSV = "Inference/inferencing/sample_transactions.csv"
+# Use new structure location for sample raw transactions
+SAMPLE_TXN_CSV = "datasets/merged_transactions.csv"
 
 
 def load_first_n_txn_ids(path: str, n_rows: int) -> List[str]:
